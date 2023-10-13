@@ -1,0 +1,11 @@
+torch
+transformers
+datasets
+accelerate
+bitsandbytes
+scipy
+huggingface_hub
+deepspeed
+trl
+peft
+ipykernel

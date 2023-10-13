@@ -1,0 +1,126 @@
+usage: run_clm_no_trainer.py [-h] [--dataset_name DATASET_NAME]
+                             [--dataset_config_name DATASET_CONFIG_NAME]
+                             [--train_file TRAIN_FILE]
+                             [--validation_file VALIDATION_FILE]
+                             [--validation_split_percentage VALIDATION_SPLIT_PERCENTAGE]
+                             [--model_name_or_path MODEL_NAME_OR_PATH]
+                             [--config_name CONFIG_NAME]
+                             [--tokenizer_name TOKENIZER_NAME]
+                             [--use_slow_tokenizer]
+                             [--per_device_train_batch_size PER_DEVICE_TRAIN_BATCH_SIZE]
+                             [--per_device_eval_batch_size PER_DEVICE_EVAL_BATCH_SIZE]
+                             [--learning_rate LEARNING_RATE]
+                             [--weight_decay WEIGHT_DECAY]
+                             [--num_train_epochs NUM_TRAIN_EPOCHS]
+                             [--max_train_steps MAX_TRAIN_STEPS]
+                             [--gradient_accumulation_steps GRADIENT_ACCUMULATION_STEPS]
+                             [--lr_scheduler_type {linear,cosine,cosine_with_restarts,polynomial,constant,constant_with_warmup}]
+                             [--num_warmup_steps NUM_WARMUP_STEPS]
+                             [--output_dir OUTPUT_DIR] [--seed SEED]
+                             [--model_type {albert,align,altclip,audio-spectrogram-transformer,autoformer,bark,bart,beit,bert,bert-generation,big_bird,bigbird_pegasus,biogpt,bit,blenderbot,blenderbot-small,blip,blip-2,bloom,bridgetower,bros,camembert,canine,chinese_clip,clap,clip,clipseg,llama,codegen,conditional_detr,convbert,convnext,convnextv2,cpmant,ctrl,cvt,data2vec-audio,data2vec-text,data2vec-vision,deberta,deberta-v2,decision_transformer,deformable_detr,deit,deta,detr,dinat,dinov2,distilbert,donut-swin,dpr,dpt,efficientformer,efficientnet,electra,encodec,ernie,ernie_m,esm,falcon,flaubert,flava,fnet,focalnet,fsmt,funnel,git,glpn,gpt2,gpt2,gpt_bigcode,gpt_neo,gpt_neox,gpt_neox_japanese,gptj,gptsan-japanese,graphormer,groupvit,hubert,ibert,idefics,imagegpt,informer,jukebox,layoutlm,layoutlmv2,layoutlmv3,led,levit,lilt,llama,longformer,longt5,luke,lxmert,m2m_100,marian,markuplm,mask2former,maskformer,maskformer-swin,mbart,mctct,mega,megatron-bert,mgp-str,mistral,mobilebert,mobilenet_v1,mobilenet_v2,mobilevit,mobilevitv2,mpnet,mpt,mra,mt5,mvp,nat,nezha,nllb-moe,nystromformer,oneformer,open-llama,openai-gpt,opt,owlvit,pegasus,pegasus_x,perceiver,persimmon,plbart,poolformer,prophetnet,pvt,qdqbert,reformer,regnet,rembert,resnet,retribert,roberta,roberta-prelayernorm,roc_bert,roformer,rwkv,sam,segformer,sew,sew-d,speech_to_text,speecht5,splinter,squeezebert,swiftformer,swin,swin2sr,swinv2,switch_transformers,t5,table-transformer,tapas,time_series_transformer,timesformer,timm_backbone,trajectory_transformer,transfo-xl,tvlt,umt5,unispeech,unispeech-sat,van,videomae,vilt,vision-text-dual-encoder,visual_bert,vit,vit-hybrid,vit_mae,vit_msn,vitdet,vits,vivit,wav2vec2,wav2vec2-conformer,wavlm,whisper,xclip,xglm,xlm,xlm-prophetnet,xlm-roberta,xlm-roberta-xl,xlnet,xmod,yolos,yoso}]
+                             [--block_size BLOCK_SIZE]
+                             [--preprocessing_num_workers PREPROCESSING_NUM_WORKERS]
+                             [--overwrite_cache] [--no_keep_linebreaks]
+                             [--push_to_hub] [--hub_model_id HUB_MODEL_ID]
+                             [--hub_token HUB_TOKEN]
+                             [--trust_remote_code TRUST_REMOTE_CODE]
+                             [--checkpointing_steps CHECKPOINTING_STEPS]
+                             [--resume_from_checkpoint RESUME_FROM_CHECKPOINT]
+                             [--with_tracking] [--report_to REPORT_TO]
+                             [--low_cpu_mem_usage]
+
+Finetune a transformers model on a causal language modeling task
+
+options:
+  -h, --help            show this help message and exit
+  --dataset_name DATASET_NAME
+                        The name of the dataset to use (via the datasets
+                        library).
+  --dataset_config_name DATASET_CONFIG_NAME
+                        The configuration name of the dataset to use (via the
+                        datasets library).
+  --train_file TRAIN_FILE
+                        A csv, txt or a json file containing the training
+                        data.
+  --validation_file VALIDATION_FILE
+                        A csv, txt or a json file containing the validation
+                        data.
+  --validation_split_percentage VALIDATION_SPLIT_PERCENTAGE
+                        The percentage of the train set used as validation set
+                        in case there's no validation split
+  --model_name_or_path MODEL_NAME_OR_PATH
+                        Path to pretrained model or model identifier from
+                        huggingface.co/models.
+  --config_name CONFIG_NAME
+                        Pretrained config name or path if not the same as
+                        model_name
+  --tokenizer_name TOKENIZER_NAME
+                        Pretrained tokenizer name or path if not the same as
+                        model_name
+  --use_slow_tokenizer  If passed, will use a slow tokenizer (not backed by
+                        the 🤗 Tokenizers library).
+  --per_device_train_batch_size PER_DEVICE_TRAIN_BATCH_SIZE
+                        Batch size (per device) for the training dataloader.
+  --per_device_eval_batch_size PER_DEVICE_EVAL_BATCH_SIZE
+                        Batch size (per device) for the evaluation dataloader.
+  --learning_rate LEARNING_RATE
+                        Initial learning rate (after the potential warmup
+                        period) to use.
+  --weight_decay WEIGHT_DECAY
+                        Weight decay to use.
+  --num_train_epochs NUM_TRAIN_EPOCHS
+                        Total number of training epochs to perform.
+  --max_train_steps MAX_TRAIN_STEPS
+                        Total number of training steps to perform. If
+                        provided, overrides num_train_epochs.
+  --gradient_accumulation_steps GRADIENT_ACCUMULATION_STEPS
+                        Number of updates steps to accumulate before
+                        performing a backward/update pass.
+  --lr_scheduler_type {linear,cosine,cosine_with_restarts,polynomial,constant,constant_with_warmup}
+                        The scheduler type to use.
+  --num_warmup_steps NUM_WARMUP_STEPS
+                        Number of steps for the warmup in the lr scheduler.
+  --output_dir OUTPUT_DIR
+                        Where to store the final model.
+  --seed SEED           A seed for reproducible training.
+  --model_type {albert,align,altclip,audio-spectrogram-transformer,autoformer,bark,bart,beit,bert,bert-generation,big_bird,bigbird_pegasus,biogpt,bit,blenderbot,blenderbot-small,blip,blip-2,bloom,bridgetower,bros,camembert,canine,chinese_clip,clap,clip,clipseg,llama,codegen,conditional_detr,convbert,convnext,convnextv2,cpmant,ctrl,cvt,data2vec-audio,data2vec-text,data2vec-vision,deberta,deberta-v2,decision_transformer,deformable_detr,deit,deta,detr,dinat,dinov2,distilbert,donut-swin,dpr,dpt,efficientformer,efficientnet,electra,encodec,ernie,ernie_m,esm,falcon,flaubert,flava,fnet,focalnet,fsmt,funnel,git,glpn,gpt2,gpt2,gpt_bigcode,gpt_neo,gpt_neox,gpt_neox_japanese,gptj,gptsan-japanese,graphormer,groupvit,hubert,ibert,idefics,imagegpt,informer,jukebox,layoutlm,layoutlmv2,layoutlmv3,led,levit,lilt,llama,longformer,longt5,luke,lxmert,m2m_100,marian,markuplm,mask2former,maskformer,maskformer-swin,mbart,mctct,mega,megatron-bert,mgp-str,mistral,mobilebert,mobilenet_v1,mobilenet_v2,mobilevit,mobilevitv2,mpnet,mpt,mra,mt5,mvp,nat,nezha,nllb-moe,nystromformer,oneformer,open-llama,openai-gpt,opt,owlvit,pegasus,pegasus_x,perceiver,persimmon,plbart,poolformer,prophetnet,pvt,qdqbert,reformer,regnet,rembert,resnet,retribert,roberta,roberta-prelayernorm,roc_bert,roformer,rwkv,sam,segformer,sew,sew-d,speech_to_text,speecht5,splinter,squeezebert,swiftformer,swin,swin2sr,swinv2,switch_transformers,t5,table-transformer,tapas,time_series_transformer,timesformer,timm_backbone,trajectory_transformer,transfo-xl,tvlt,umt5,unispeech,unispeech-sat,van,videomae,vilt,vision-text-dual-encoder,visual_bert,vit,vit-hybrid,vit_mae,vit_msn,vitdet,vits,vivit,wav2vec2,wav2vec2-conformer,wavlm,whisper,xclip,xglm,xlm,xlm-prophetnet,xlm-roberta,xlm-roberta-xl,xlnet,xmod,yolos,yoso}
+                        Model type to use if training from scratch.
+  --block_size BLOCK_SIZE
+                        Optional input sequence length after tokenization. The
+                        training dataset will be truncated in block of this
+                        size for training. Default to the model max input
+                        length for single sentence inputs (take into account
+                        special tokens).
+  --preprocessing_num_workers PREPROCESSING_NUM_WORKERS
+                        The number of processes to use for the preprocessing.
+  --overwrite_cache     Overwrite the cached training and evaluation sets
+  --no_keep_linebreaks  Do not keep line breaks when using TXT files.
+  --push_to_hub         Whether or not to push the model to the Hub.
+  --hub_model_id HUB_MODEL_ID
+                        The name of the repository to keep in sync with the
+                        local `output_dir`.
+  --hub_token HUB_TOKEN
+                        The token to use to push to the Model Hub.
+  --trust_remote_code TRUST_REMOTE_CODE
+                        Whether or not to allow for custom models defined on
+                        the Hub in their own modeling files. This optionshould
+                        only be set to `True` for repositories you trust and
+                        in which you have read the code, as it willexecute
+                        code present on the Hub on your local machine.
+  --checkpointing_steps CHECKPOINTING_STEPS
+                        Whether the various states should be saved at the end
+                        of every n steps, or 'epoch' for each epoch.
+  --resume_from_checkpoint RESUME_FROM_CHECKPOINT
+                        If the training should continue from a checkpoint
+                        folder.
+  --with_tracking       Whether to enable experiment trackers for logging.
+  --report_to REPORT_TO
+                        The integration to report the results and logs to.
+                        Supported platforms are `"tensorboard"`, `"wandb"`,
+                        `"comet_ml"` and `"clearml"`. Use `"all"` (default) to
+                        report to all integrations.Only applicable when
+                        `--with_tracking` is passed.
+  --low_cpu_mem_usage   It is an option to create the model as an empty shell,
+                        then only materialize its parameters when the
+                        pretrained weights are loaded.If passed, LLM loading
+                        time and RAM consumption will be benefited.
