@@ -14,6 +14,7 @@ model=${MODEL:-/scratch/gpfs/mj2976/.cache/huggingface/models--meta-llama--Llama
 
 # Data
 dataset=${DATASET:-$DATA_DIR/text_only_split}
+# dataset=${DATASET:-$DATA_DIR/blocks_4096}
 # train_file=${TRAIN_FILE:-$DATA_DIR/text_trainvalid_split.json} # train includes train and valid, using held-out test
 # validation_split_percentage=${VALIDATION_SPLIT_PERCENTAGE:-0.1} # between 0 and 1
 block_size=${BLOCK_SIZE:-4096} # 4096 possible?
@@ -27,7 +28,7 @@ warmup=${WARMUP:-0.1}
 seed=${SEED:-42}
 
 # Multi-device config
-num_cpus=${NUM_CPUS:-10} # per device
+num_cpus=${NUM_CPUS:-48} # per device
 num_gpus=$(nvidia-smi -L | wc -l)
 gradient_accumulation_steps=1
 accelerate_config=${ACCELERATE_CONFIG:-$SCRIPT_DIR/accelerate_config.yaml}
@@ -44,6 +45,7 @@ header="accelerate launch \
 base_arguments=(
     ### Dataset args ###
     --dataset_path $dataset
+    # --dataset_is_preprocessed 
     # --train_file $train_file
     # --validation_split_percentage $validation_split_percentage
 

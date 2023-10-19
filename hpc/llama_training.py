@@ -250,6 +250,63 @@ def parse_args():
     return args
 
 def main():
-    args = parse_args()
-    with open('clm_args.json', 'w') as f:
-        json.dump(args.__dict__, f, indent=2)
+    # args = parse_args()
+    with open('clm_test_args.json', 'r') as f:
+        args.__dict__ = json.loads(f)
+        # json.dump(args.__dict__, f, indent=2)
+
+    # Setup logging
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        datefmt="%m/%d/%Y %H:%M:%S",
+        level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    # Set seed
+    set_seed(args.seed)
+
+    # Load data
+    lm_datasets = datasets.load_from_disk(args.dataset_path)
+    train_dataset = lm_datasets["train"]
+    eval_dataset = lm_datasets["validation"]
+
+    # Log a few random samples from the training set:
+    for index in random.sample(range(len(train_dataset)), 3):
+        logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
+
+    # Create dataloaders
+    train_dataloader = DataLoader(
+        train_dataset, shuffle=True, collate_fn=default_data_collator, batch_size=args.per_device_train_batch_size
+    )
+    eval_dataloader = DataLoader(
+        eval_dataset, collate_fn=default_data_collator, batch_size=args.per_device_eval_batch_size
+    )
+
+    # Optimizer
+    # Split weights in two groups, one with weight decay and the other not.
+    no_decay = ["bias", "layer_norm.weight"]
+    optimizer_grouped_parameters = [
+        {
+            "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
+            "weight_decay": args.weight_decay,
+        },
+        {
+            "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
+            "weight_decay": 0.0,
+        },
+    ]
+    optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=args.learning_rate)
+
+    # Scheduler and math around the number of training steps.
+    overrode_max_train_steps = False
+    num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
+    if args.max_train_steps is None:
+        args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
+        overrode_max_train_steps = True
+
+    lr_scheduler = get_scheduler(
+        name=args.lr_scheduler_type,
+        optimizer=optimizer,
+        num_warmup_steps=args.num_warmup_steps * args.gradient_accumulation_steps,
+        num_training_steps=args.max_train_steps * args.gradient_accumulation_steps,
+    )

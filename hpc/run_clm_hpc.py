@@ -265,8 +265,10 @@ def parse_args():
 
 def main():
     args = parse_args()
-    with open('clm_args.json', 'w') as f:
-        json.dump(args.__dict__, f, indent=2)
+
+    # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
+    # information sent is the one passed as arguments along with your Python/PyTorch versions.
+    # send_example_telemetry("run_clm_no_trainer", args)
 
     # Initialize the accelerator. We will let the accelerator handle device placement for us in this example.
     # If we're using tracking, we also need to initialize it here and it will by default pick up all supported trackers
@@ -293,6 +295,8 @@ def main():
         datasets.utils.logging.set_verbosity_error()
         transformers.utils.logging.set_verbosity_error()
 
+
+    logger.info(accelerator.state)
     # If passed along, set the training seed now.
     if args.seed is not None:
         set_seed(args.seed)
@@ -410,8 +414,9 @@ def main():
             args.model_name_or_path,
             from_tf=bool(".ckpt" in args.model_name_or_path),
             config=config,
-            low_cpu_mem_usage=args.low_cpu_mem_usage,
+            # low_cpu_mem_usage=args.low_cpu_mem_usage,
             trust_remote_code=args.trust_remote_code,
+            # device_map='auto'
         )
     else:
         logger.info("Training new model from scratch")
@@ -489,10 +494,11 @@ def main():
             load_from_cache_file=not args.overwrite_cache,
             desc=f"Grouping texts in chunks of {block_size}",
         )
+        # lm_datasets.save_to_disk(f'../data/blocks_{block_size}')
 
     train_dataset = lm_datasets["train"]
-    # eval_dataset = lm_datasets["validation"]
-    eval_dataset = lm_datasets["valid"]
+    eval_dataset = lm_datasets["validation"]
+    # eval_dataset = lm_datasets["valid"]
 
 
     # Log a few random samples from the training set:

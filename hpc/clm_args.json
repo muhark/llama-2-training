@@ -1,6 +1,7 @@
 {
-  "dataset_path": "/scratch/gpfs/mj2976/projects/llama-2-training/data/text_only_split",
+  "dataset_path": "/scratch/gpfs/mj2976/projects/llama-2-training/data/blocks_4096",
   "dataset_config_name": null,
+  "dataset_is_preprocessed": true,
   "train_file": null,
   "validation_file": null,
   "validation_split_percentage": 5,
