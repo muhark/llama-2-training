@@ -2,7 +2,7 @@ import random
 import torch
 from transformers import TrainerCallback, TrainingArguments, TrainerState, TrainerControl
 from torch.utils.data import IterableDataset
-from datasets import load_dataset
+from datasets import load_from_disk
 from tqdm import tqdm
 import warnings
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
@@ -126,7 +126,8 @@ def chars_token_ratio(dataset, tokenizer, data_column, nb_examples=400):
 
 
 def create_datasets(tokenizer, args):
-    dataset = load_dataset(args.dataset_name, use_auth_token=True, num_proc=args.num_workers)
+    # dataset = load_dataset(args.dataset_name, use_auth_token=True, num_proc=args.num_workers)
+    dataset = load_from_disk(args.dataset_name)
     train_data = dataset["train"]
     valid_data = dataset["test"]
     print(f"Size of the train set: {len(train_data)}. Size of the validation set: {len(valid_data)}")
