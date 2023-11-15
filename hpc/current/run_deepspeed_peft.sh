@@ -1,0 +1,28 @@
+accelerate launch --config_file "configs/deepspeed_config_v2.yaml"  train.py \
+--model_name $HF_HOME/models--meta-llama--Llama-2-70b-chat-hf/snapshots/9ff8b00464fc439a64bb374769dec3dd627be1c2 \
+--dataset_name "/scratch/gpfs/mj2976/projects/llama-2-training/data/text_only_split" \
+--max_seq_len 2048 \
+--max_steps 1000 \
+--logging_steps 25 \
+--eval_steps 300 \
+--save_steps 100 \
+--bf16 True \
+--packing True \
+--output_dir "llama-2-70b-chat_deepspeed_peft_test" \
+--per_device_train_batch_size 2 \
+--gradient_accumulation_steps 1 \
+--dataset_text_field "text" \
+--use_gradient_checkpointing \
+--learning_rate 5e-5  \
+--lr_scheduler_type "cosine" \
+--weight_decay 0.01 \
+--warmup_ratio 0.03 \
+--use_peft_lora True \
+--lora_r 8 \
+--lora_alpha 32 \
+--lora_target_modules "q_proj,k_proj,o_proj,down_proj,up_proj,gate_proj" \
+--bf16 True \
+--use_4bit_quantization True \
+--use_nested_quant True \
+--bnb_4bit_compute_dtype "bfloat16" \
+--use_flash_attn True
