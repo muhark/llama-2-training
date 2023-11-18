@@ -1,17 +1,8 @@
-# coding=utf-8
-# Copyright 2023 The HuggingFace Inc. team. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+########################################################################
+# Training loop based on example from HuggingFace
+# Copied/modified by @muhark
+########################################################################
+
 from dataclasses import dataclass, field
 import os
 import subprocess
@@ -20,44 +11,57 @@ from typing import Optional
 from transformers import HfArgumentParser, TrainingArguments, Trainer
 from utils import *
 
-########################################################################
-# Training loop based on example from HuggingFace
-# Copied/modified by @muhark
-########################################################################
-
-
-# Define and parse arguments.
+# Script Arguments
 @dataclass
 class ScriptArguments:
     """
     """
+    # Model
+    model_name_or_path: Optional[str] = field(
+        default="meta-llama/Llama-2-7b-chat-hf",
+        metadata={
+            "help": "Model name in HF repo format or path to weights. If path, must contain `config.json`."
+        },
+    )
 
-    local_rank: Optional[int] = field(default=-1, metadata={"help": "Used for multi-gpu"})
+    # Dataset
+    dataset_name_or_path: Optional[str] = field(
+        default="",
+        metadata={"help": "The preference dataset to use."},
+    )
 
+    # Data preprocessing
+    max_seq_length: Optional[int] = field(default=512)
+    packing: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Use packing dataset creating."},
+    )
+
+    # Training hyperparams
     per_device_train_batch_size: Optional[int] = field(default=4)
     per_device_eval_batch_size: Optional[int] = field(default=1)
     gradient_accumulation_steps: Optional[int] = field(default=4)
     learning_rate: Optional[float] = field(default=2e-4)
     max_grad_norm: Optional[float] = field(default=0.3)
     weight_decay: Optional[float] = field(default=0.001)
+    optim: Optional[str] = field(default="paged_adamw_32bit")
+    lr_scheduler_type: str = field(default="constant")
+
+    # LoRA Config
+    use_peft_lora: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Enables PEFT LoRA for training."},
+    )
+    lora_task_type: Optional[str] = field(default="CASUAL_LM")
+    lora_r: Optional[int] = field(default=64)
     lora_alpha: Optional[int] = field(default=16)
     lora_dropout: Optional[float] = field(default=0.1)
-    lora_r: Optional[int] = field(default=64)
     lora_target_modules: Optional[str] = field(
         default="q_proj,k_proj,v_proj,o_proj,down_proj,up_proj,gate_proj",
         metadata={"help": "comma separated list of target modules to apply LoRA layers to"},
     )
-    max_seq_length: Optional[int] = field(default=512)
-    model_name: Optional[str] = field(
-        default="Salesforce/codegen25-7b-multi",
-        metadata={
-            "help": "The model that you want to train from the Hugging Face hub. E.g. gpt2, gpt2-xl, bert, etc."
-        },
-    )
-    dataset_name: Optional[str] = field(
-        default="timdettmers/openassistant-guanaco",
-        metadata={"help": "The preference dataset to use."},
-    )
+
+    # Quantization config
     use_4bit: Optional[bool] = field(
         default=True,
         metadata={"help": "Activate 4bit precision base model loading"},
@@ -74,6 +78,19 @@ class ScriptArguments:
         default="nf4",
         metadata={"help": "Quantization type fp4 or nf4"},
     )
+    use_4bit_quantization: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Enables loading model in 4bit."},
+    )
+    use_8bit_quantization: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Enables loading model in 8bit."},
+    )
+
+
+    # Hardware args
+    local_rank: Optional[int] = field(default=-1, metadata={"help": "Used for multi-gpu"})
+
     num_train_epochs: Optional[int] = field(
         default=1,
         metadata={"help": "The number of training epochs for the reward model."},
@@ -86,21 +103,9 @@ class ScriptArguments:
         default=False,
         metadata={"help": "Enables bf16 training."},
     )
-    packing: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Use packing dataset creating."},
-    )
     gradient_checkpointing: Optional[bool] = field(
         default=True,
         metadata={"help": "Enables gradient checkpointing."},
-    )
-    optim: Optional[str] = field(
-        default="paged_adamw_32bit",
-        metadata={"help": "The optimizer to use."},
-    )
-    lr_scheduler_type: str = field(
-        default="constant",
-        metadata={"help": "Learning rate schedule. Constant a bit better than cosine, and has advantage for analysis"},
     )
     max_steps: int = field(default=10000, metadata={"help": "How many optimizer update steps to take"})
     warmup_ratio: float = field(default=0.03, metadata={"help": "Fraction of steps to do a warmup for"})
@@ -111,18 +116,6 @@ class ScriptArguments:
     use_flash_attn: Optional[bool] = field(
         default=False,
         metadata={"help": "Enables Flash attention for training."},
-    )
-    use_peft_lora: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Enables PEFT LoRA for training."},
-    )
-    use_8bit_quantization: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Enables loading model in 8bit."},
-    )
-    use_4bit_quantization: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Enables loading model in 4bit."},
     )
     use_gradient_checkpointing: Optional[bool] = field(
         default=False,
@@ -150,7 +143,6 @@ def main(args):
         output_dir=args.output_dir,
         per_device_train_batch_size=args.per_device_train_batch_size,
         gradient_accumulation_steps=args.gradient_accumulation_steps,
-        optim=args.optim,
         learning_rate=args.learning_rate,
         fp16=args.fp16,
         bf16=args.bf16,

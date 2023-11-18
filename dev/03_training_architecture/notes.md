@@ -9,10 +9,18 @@ Functionality needed for training loop:
 - [ ] Custom eval callback for trainer - add the eval tasks to this ([#5](https://github.com/muhark/llama-2-training/issues/5)).
 - [ ] Dashboard logging for eval tasks - use wandb  ([#6](https://github.com/muhark/llama-2-training/issues/6))
 
-Beginning development on [scripts/train.py](./scripts/train.py) and [scripts/utils.py](scripts/utils.py).
+Beginning development in [scripts](./scripts).
 
-- `train.py` holds the argparser and `main`
-- `utils.py` holds all the actual processing steps
+- `train.py` and `utils.py` are based on the [previous iteration](../02_dhs_workshop/).
+- `sft.py` based on [sft.py from trl](https://github.com/huggingface/trl/blob/28bdb6a3736b09f8bad7961f16852d052c74ae04/examples/scripts/sft.py)
 
-Begin basing on the dhs-workshop script in [02_dhs_workshop](../02_dhs_workshop/).
+[`sft.py`](./scripts/sft.py) seems to be promising for having the necessary tools.
 
+NB: Model saving/loading [here](https://huggingface.co/docs/peft/v0.6.2/en/quicktour#save-and-load-a-model), tldr there is an `AutoPeftModelForCausalLM.from_pretrained` convenience loader.
+
+
+Still to do:
+
+- Check that added args line up. (Maybe diff with original script?)
+- Write custom eval loop and add as callback in trainer.
+- Figure out wandb logging (probably changed since I last looked at it)

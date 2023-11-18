@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+from typing import Optional
 import random
 import torch
 from transformers import TrainerCallback, TrainingArguments, TrainerState, TrainerControl
@@ -113,6 +116,39 @@ class ConstantLengthDataset(IterableDataset):
                 }
 
 
+def get_weight_dir(
+        model_ref: str,
+        hf_cache_dir: Optional[os.PathLike],
+        revision: str='main'
+        ) -> Path:
+    """
+    Convenience function for retrieving locally stored HF weights.
+    """
+    if hf_cache_dir is None:
+        try: # Check if user set HF_HOME envvar
+            hf_cache_dir = Path(os.environ.get("HF_HOME", None)).expand_user()
+        except TypeError: # Use sensible default
+            hf_cache_dir = Path("~/.cache/huggingface/hub").expanduser()
+    if not isinstance(hf_cache_dir, Path):
+        hf_cache_dir = Path(hf_cache_dir)
+    assert hf_cache_dir.exists(), f"Couldn't find HF cache directory: {hf_cache_dir}"
+    model_path = "--".join(['models'] + model_ref.split('/'))
+    snapshot = (hf_cache_dir / f'{model_path}/refs/{revision}').read_text()
+    model_weights_dir = hf_cache_dir / f"{model_path}/snapshots/{snapshot}"
+    return model_weights_dir
+
+
+def parse_model_name_or_path(args) -> Path:
+    "Convenience function for dealing with working alternatively in "
+    "network restricted cluster. Returns directory containing weights."
+    weight_dir = Path(args.model_name_or_path)
+    if not (weight_dir/'config.json').exists(): # I think this is how HF does it?
+        weight_dir = get_weight_dir(model_ref=args.model_name_or_path,
+                                    hf_cache_dir=args.hf_cache_dir,
+                                    revision='main')
+    return weight_dir
+
+
 def chars_token_ratio(dataset, tokenizer, data_column, nb_examples=400):
     """
     Estimate the average number of characters per token in the dataset.
@@ -160,26 +196,26 @@ def create_datasets(tokenizer, args):
 def create_and_prepare_model(args):
     device_map = None
     bnb_config = None
-    load_in_8bit = args.use_8bit_qunatization
+    load_in_8bit = args.use_8bit_quantization
 
-    if args.use_4bit_qunatization:
+    if args.use_4bit_quantization:
         compute_dtype = getattr(torch, args.bnb_4bit_compute_dtype)
 
         bnb_config = BitsAndBytesConfig(
-            load_in_4bit=args.use_4bit_qunatization,
+            load_in_4bit=args.use_4bit_quantization,
             bnb_4bit_quant_type=args.bnb_4bit_quant_type,
             bnb_4bit_compute_dtype=compute_dtype,
             bnb_4bit_use_double_quant=args.use_nested_quant,
         )
 
-        if compute_dtype == torch.float16 and args.use_4bit_qunatization:
+        if compute_dtype == torch.float16 and args.use_4bit_quantization:
             major, _ = torch.cuda.get_device_capability()
             if major >= 8:
                 print("=" * 80)
                 print("Your GPU supports bfloat16, you can accelerate training with the argument --bf16")
                 print("=" * 80)
 
-    if args.use_4bit_qunatization or args.use_8bit_qunatization:
+    if args.use_4bit_quantization or args.use_8bit_quantization:
         device_map = "auto"  # {"": 0}
     print("DEVICE MAP IS:", device_map)
 
@@ -201,10 +237,10 @@ def create_and_prepare_model(args):
             lora_dropout=args.lora_dropout,
             r=args.lora_r,
             bias="none",
-            task_type="CAUSAL_LM",
+            task_type=args.lora_task_type,
             target_modules=args.lora_target_modules.split(","),
         )
-        if (args.use_4bit_qunatization or args.use_8bit_qunatization) and args.use_peft_lora:
+        if (args.use_4bit_quantization or args.use_8bit_quantization) and args.use_peft_lora:
             model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=args.use_gradient_checkpointing)
 
         if args.use_gradient_checkpointing:
